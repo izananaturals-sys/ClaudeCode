@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "social-media-manager": {
+      "source": "alirezarezvani/claude-skills",
+      "sourceType": "github",
+      "skillPath": "marketing-skill/skills/social-media-manager/SKILL.md",
+      "computedHash": "4a66b4b9b9d0c30c77be52dbdf91ce73ac9d48c3e542b289651aad905e150e83"
+    }
+  }
+}
