@@ -54,6 +54,9 @@ const ENTER_FRAMES = 12; // 400 ms, duración "hero"
 // Márgenes seguros de story: 72 px a los lados, 250 px arriba y abajo.
 const SAFE_X = 72;
 const SAFE_Y = 250;
+// Abajo, Instagram, TikTok y Shorts ponen usuario, caption y botones:
+// nada importante por debajo de ~480 px (TikTok es la zona más alta).
+const SAFE_BOTTOM_UI = 480;
 
 const FPS = 30;
 const TRANSITION_FRAMES = 15; // 0.5 s de fundido entre cortes
@@ -227,7 +230,7 @@ const BrandFrame: React.FC<{ url: string }> = ({ url }) => {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: SAFE_Y - 60,
+          bottom: SAFE_BOTTOM_UI,
           textAlign: "center",
           fontFamily: poppins,
           fontWeight: 600,
@@ -304,7 +307,7 @@ const SceneText: React.FC<{
       style={{
         justifyContent: "center",
         alignItems: "center",
-        padding: `0 ${SAFE_X}px`,
+        padding: `0 ${SAFE_X}px 160px`,
         textAlign: "center",
         opacity: 1 - exit,
       }}
