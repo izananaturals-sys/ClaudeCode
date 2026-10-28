@@ -58,8 +58,8 @@ const SAFE_Y = 250;
 const FPS = 30;
 const TRANSITION_FRAMES = 15; // 0.5 s de fundido entre cortes
 // Cada escena se solapa con la siguiente durante la transición:
-// 5 × 102 − 4 × 15 = 450 frames = 15 s.
-const SCENE_FRAMES = 102;
+// 5 × 135 − 4 × 15 = 615 frames = 20.5 s. Cada frase queda ~2 s en pantalla.
+const SCENE_FRAMES = 135;
 
 type Scene = {
   // Archivo dentro de public/clips (ej. "corte1.mp4"). null = placeholder.
