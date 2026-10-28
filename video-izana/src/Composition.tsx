@@ -13,14 +13,11 @@ import {
 import { loadFont } from "@remotion/fonts";
 import {
   linearTiming,
-  springTiming,
   TransitionPresentation,
   TransitionSeries,
   TransitionTiming,
 } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
-import { slide } from "@remotion/transitions/slide";
-import { wipe } from "@remotion/transitions/wipe";
 
 // Poppins (fuente de marca) en public/fonts: el render no depende de internet.
 const poppins = "Poppins";
@@ -102,32 +99,11 @@ const musicVolume = (f: number, total: number) =>
   );
 
 // Transición que entra en cada corte (después de la escena i).
+// Todas son fundidos para un look sobrio y delicado.
 const TRANSITIONS: {
   presentation: TransitionPresentation<Record<string, unknown>>;
   timing: TransitionTiming;
 }[] = [
-  // Cajas → regalo: sube como quien abre la tapa.
-  {
-    presentation: slide({ direction: "from-bottom" }),
-    timing: springTiming({
-      config: { damping: 200 },
-      durationInFrames: TRANSITION_FRAMES,
-    }),
-  },
-  // Regalo → productos: barrido diagonal suave.
-  {
-    presentation: wipe({ direction: "from-top-left" }),
-    timing: linearTiming({ durationInFrames: TRANSITION_FRAMES }),
-  },
-  // Productos → pedidos: desliza lateral.
-  {
-    presentation: slide({ direction: "from-right" }),
-    timing: springTiming({
-      config: { damping: 200 },
-      durationInFrames: TRANSITION_FRAMES,
-    }),
-  },
-  // Pedidos → cierre: fundido tranquilo.
   {
     presentation: fade(),
     timing: linearTiming({ durationInFrames: TRANSITION_FRAMES }),
