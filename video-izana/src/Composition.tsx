@@ -41,9 +41,7 @@ for (const [weight, style] of [
 // Tokens del Izana Naturals Design System (colors_and_type.css).
 const IZANA = {
   lima: "#9EAC13",
-  lima700: "#4F5609",
   verdeBosque: "#4D6004",
-  olivaOscuro: "#615E21",
   crema: "#EFEFDF",
   casiNegro: "#1D1C09",
   magenta: "#AC139E",
@@ -65,37 +63,45 @@ const SCENE_FRAMES = 102;
 
 type Scene = {
   // Archivo dentro de public/clips (ej. "corte1.mp4"). null = placeholder.
+  // Los cortes ya vienen etalonados para igualar luz y color entre sí.
   clip: string | null;
-  eyebrow: string;
-  // Las palabras entre *asteriscos* van en itálica (frase de énfasis).
-  title: string;
+  // Titular grande en lima itálica (se escribe letra por letra).
+  headline: string;
+  // Frase en crema; las palabras entre *asteriscos* van en itálica.
+  subtitle: string;
 };
 
 type Props = {
   scenes: Scene[];
   cta: string;
+  url: string;
 };
 
 // Guion: el empaque no es una caja, es un regalo. Voz de marca en "tú".
 const defaultProps: Props = {
   cta: "Pide el tuyo hoy",
+  url: "izananaturals.com",
   scenes: [
-    { clip: "1-cajas.mp4", eyebrow: "En Izana", title: "No empacamos *pedidos.*" },
-    { clip: "2-regalo.mp4", eyebrow: "Con amor", title: "Envolvemos *regalos.*" },
+    { clip: "1-cajas.mp4", headline: "No es un envío", subtitle: "es *un regalo.*" },
+    {
+      clip: "2-regalo.mp4",
+      headline: "Envuelto a mano",
+      subtitle: "con flores *y mucho cariño.*",
+    },
     {
       clip: "3-productos.mp4",
-      eyebrow: "Cada detalle",
-      title: "Hecho a mano, *con calma.*",
+      headline: "Natural",
+      subtitle: "Pequeños gestos, *grandes detalles.*",
     },
     {
       clip: "4-pedidos.mp4",
-      eyebrow: "Porque abrirlo",
-      title: "también es parte *de cuidarte.*",
+      headline: "Con calma",
+      subtitle: "porque abrirlo también *es cuidarte.*",
     },
     {
       clip: "5-final.mp4",
-      eyebrow: "Kits de regalo",
-      title: "Tu pedido merece *llegar así.*",
+      headline: "Así llega",
+      subtitle: "tu pedido *Izana.*",
     },
   ],
 };
@@ -136,7 +142,7 @@ const TRANSITIONS: {
   },
 ];
 
-export const EmpaqueRegalo: React.FC<Props> = ({ scenes, cta }) => {
+export const EmpaqueRegalo: React.FC<Props> = ({ scenes, cta, url }) => {
   const { durationInFrames } = useVideoConfig();
   return (
     <AbsoluteFill style={{ backgroundColor: IZANA.casiNegro }}>
@@ -153,7 +159,7 @@ export const EmpaqueRegalo: React.FC<Props> = ({ scenes, cta }) => {
               key={`s${i}`}
               durationInFrames={SCENE_FRAMES}
             >
-              <SceneView scene={scene} index={i} isLast={isLast} cta={cta} />
+              <SceneVideo clip={scene.clip} index={i} />
             </TransitionSeries.Sequence>,
             isLast ? null : (
               <TransitionSeries.Transition
@@ -165,50 +171,104 @@ export const EmpaqueRegalo: React.FC<Props> = ({ scenes, cta }) => {
           ];
         })}
       </TransitionSeries>
-      <BrandHeader />
+      {/* Velo plano casi-negro: el video se sigue viendo y el texto se lee. */}
+      <AbsoluteFill style={{ backgroundColor: "rgba(29, 28, 9, 0.5)" }} />
+      <BrandFrame url={url} />
+      {/* Los textos van aparte para que no se oscurezcan con el velo. */}
+      <TransitionSeries>
+        {scenes.flatMap((scene, i) => {
+          const isLast = i === scenes.length - 1;
+          return [
+            <TransitionSeries.Sequence
+              key={`x${i}`}
+              durationInFrames={SCENE_FRAMES}
+            >
+              <SceneText scene={scene} index={i} isLast={isLast} cta={cta} />
+            </TransitionSeries.Sequence>,
+            isLast ? null : (
+              <TransitionSeries.Transition
+                key={`y${i}`}
+                presentation={fade()}
+                timing={linearTiming({ durationInFrames: TRANSITION_FRAMES })}
+              />
+            ),
+          ];
+        })}
+      </TransitionSeries>
     </AbsoluteFill>
   );
 };
 
-// Logo completo en blanco arriba, fijo durante todo el video.
-const BrandHeader: React.FC = () => {
+// Logo completo arriba y web abajo, fijos durante todo el video.
+const BrandFrame: React.FC<{ url: string }> = ({ url }) => {
   const frame = useCurrentFrame();
   const enter = interpolate(frame, [0, ENTER_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: EASE_SOFT,
   });
+  const lift = interpolate(enter, [0, 1], [8, 0]);
 
   return (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
-      {/* Velo superior de la plantilla "Story · Tarjeta flotante" */}
+      <Img
+        src={staticFile("brand/izana-logo-blanco.png")}
+        style={{
+          position: "absolute",
+          top: SAFE_Y - 60,
+          left: "50%",
+          height: 110,
+          opacity: enter,
+          transform: `translate(-50%, ${lift}px)`,
+        }}
+      />
       <div
         style={{
           position: "absolute",
           left: 0,
           right: 0,
-          top: 0,
-          height: 520,
-          background:
-            "linear-gradient(180deg, rgba(29,28,9,0.55), rgba(29,28,9,0))",
-        }}
-      />
-      <Img
-        src={staticFile("brand/izana-logo-blanco.png")}
-        style={{
-          position: "absolute",
-          top: SAFE_Y,
-          left: "50%",
-          height: 88,
+          bottom: SAFE_Y - 60,
+          textAlign: "center",
+          fontFamily: poppins,
+          fontWeight: 600,
+          fontSize: 34,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: IZANA.crema,
           opacity: enter,
-          transform: `translate(-50%, ${interpolate(enter, [0, 1], [8, 0])}px)`,
+          transform: `translateY(${-lift}px)`,
         }}
-      />
+      >
+        {url}
+      </div>
     </AbsoluteFill>
   );
 };
 
-const SceneView: React.FC<{
+const SceneVideo: React.FC<{ clip: string | null; index: number }> = ({
+  clip,
+  index,
+}) => {
+  const frame = useCurrentFrame();
+  // Ken Burns lento durante toda la escena.
+  const scale = interpolate(frame, [0, SCENE_FRAMES], [1.04, 1.1]);
+
+  return (
+    <AbsoluteFill style={{ transform: `scale(${scale})` }}>
+      {clip ? (
+        <OffthreadVideo
+          src={staticFile(`clips/${clip}`)}
+          muted
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <Placeholder index={index} />
+      )}
+    </AbsoluteFill>
+  );
+};
+
+const SceneText: React.FC<{
   scene: Scene;
   index: number;
   isLast: boolean;
@@ -216,79 +276,84 @@ const SceneView: React.FC<{
 }> = ({ scene, index, isLast, cta }) => {
   const frame = useCurrentFrame();
 
-  // Ken Burns lento durante toda la escena.
-  const scale = interpolate(frame, [0, SCENE_FRAMES], [1.04, 1.1]);
-
-  // La tarjeta entra cuando termina el fundido y sale antes del siguiente.
+  // Los textos entran cuando termina el fundido y salen antes del siguiente.
   const enterAt = index === 0 ? 6 : TRANSITION_FRAMES;
-  const enter = interpolate(frame, [enterAt, enterAt + ENTER_FRAMES], [0, 1], {
+  const typeDone = enterAt + Math.ceil(scene.headline.length / CHARS_PER_FRAME);
+  const line = interpolate(frame, [typeDone, typeDone + ENTER_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: EASE_SOFT,
   });
-  const exitAt = SCENE_FRAMES - TRANSITION_FRAMES - 10;
+  const sub = interpolate(
+    frame,
+    [typeDone + 4, typeDone + 4 + ENTER_FRAMES],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: EASE_SOFT },
+  );
+  const exitAt = SCENE_FRAMES - TRANSITION_FRAMES - 8;
   const exit = isLast
     ? 0
-    : interpolate(frame, [exitAt, exitAt + 10], [0, 1], {
+    : interpolate(frame, [exitAt, exitAt + 8], [0, 1], {
         extrapolateLeft: "clamp",
         extrapolateRight: "clamp",
         easing: EASE_SOFT,
       });
 
   return (
-    <AbsoluteFill>
-      <AbsoluteFill style={{ transform: `scale(${scale})` }}>
-        {scene.clip ? (
-          <OffthreadVideo
-            src={staticFile(`clips/${scene.clip}`)}
-            muted
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              // Imagen de marca: luz cálida, saturación −15 %.
-              filter: "saturate(0.85) sepia(0.06)",
-            }}
-          />
-        ) : (
-          <Placeholder index={index} />
-        )}
-      </AbsoluteFill>
-
-      {isLast ? <Sparkles startAt={enterAt + 50} /> : null}
-
-      {/* Tarjeta crema flotante */}
+    <AbsoluteFill
+      style={{
+        justifyContent: "center",
+        alignItems: "center",
+        padding: `0 ${SAFE_X}px`,
+        textAlign: "center",
+        opacity: 1 - exit,
+      }}
+    >
+      {isLast ? <Sparkles startAt={typeDone} /> : null}
+      <TypedText
+        text={scene.headline}
+        delay={enterAt}
+        style={{
+          fontFamily: poppins,
+          fontWeight: 600,
+          fontStyle: "italic",
+          fontSize: 168,
+          lineHeight: 0.98,
+          letterSpacing: "-0.02em",
+          color: IZANA.lima,
+          margin: 0,
+        }}
+      />
+      {/* Línea lima que se dibuja bajo el titular */}
       <div
         style={{
-          position: "absolute",
-          left: SAFE_X,
-          right: SAFE_X,
-          bottom: SAFE_Y,
-          backgroundColor: IZANA.crema,
-          borderRadius: 32,
-          padding: "64px 64px 56px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 28,
-          opacity: enter * (1 - exit),
-          transform: `translateY(${8 * (1 - enter) - 8 * exit}px)`,
+          width: 140 * line,
+          height: 3,
+          backgroundColor: IZANA.lima,
+          margin: "56px 0 48px",
+        }}
+      />
+      <div
+        style={{
+          fontFamily: poppins,
+          fontWeight: 600,
+          fontSize: 76,
+          lineHeight: 1.12,
+          color: IZANA.crema,
+          opacity: sub,
+          transform: `translateY(${8 * (1 - sub)}px)`,
         }}
       >
-        <span
-          style={{
-            fontFamily: poppins,
-            fontWeight: 600,
-            fontSize: 26,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: IZANA.lima700,
-          }}
-        >
-          {scene.eyebrow}
-        </span>
-        <TypedTitle text={scene.title} delay={enterAt + 8} />
-        {isLast ? <CtaPill label={cta} delay={enterAt + 46} /> : null}
+        {parseEmphasis(scene.subtitle).map((seg, i) => (
+          <span
+            key={i}
+            style={seg.italic ? { fontStyle: "italic", fontWeight: 400 } : {}}
+          >
+            {seg.text}
+          </span>
+        ))}
       </div>
+      {isLast ? <CtaPill label={cta} delay={typeDone + 24} /> : null}
     </AbsoluteFill>
   );
 };
@@ -304,81 +369,40 @@ const parseEmphasis = (text: string) =>
         : { text: part, italic: false },
     );
 
-// Velocidad de escritura del título (letras por frame, 30 fps).
-const CHARS_PER_FRAME = 1.1;
+// Velocidad de escritura del titular (letras por frame, 30 fps).
+const CHARS_PER_FRAME = 0.8;
 
-// Título tipo máquina de escribir: roman 600 + frase de énfasis en itálica.
-const TypedTitle: React.FC<{ text: string; delay: number }> = ({
-  text,
-  delay,
-}) => {
+// Titular tipo máquina de escribir, con cursor lima parpadeante.
+const TypedText: React.FC<{
+  text: string;
+  delay: number;
+  style: React.CSSProperties;
+}> = ({ text, delay, style }) => {
   const frame = useCurrentFrame();
-  const segments = parseEmphasis(text);
-  const total = segments.reduce((n, s) => n + s.text.length, 0);
   const typed = Math.max(
     0,
-    Math.min(total, Math.floor((frame - delay) * CHARS_PER_FRAME)),
+    Math.min(text.length, Math.floor((frame - delay) * CHARS_PER_FRAME)),
   );
-  const isTyping = typed > 0 && typed < total;
+  const isTyping = typed > 0 && typed < text.length;
   // Fijo mientras escribe; parpadea antes de empezar y al terminar.
   const cursorOn = isTyping || Math.floor(frame / 15) % 2 === 0;
 
-  const cursor = (
-    <span
-      key="cursor"
-      style={{
-        display: "inline-block",
-        width: 6,
-        height: "0.85em",
-        marginLeft: 4,
-        verticalAlign: "-0.06em",
-        backgroundColor: IZANA.lima,
-        opacity: cursorOn ? 1 : 0,
-      }}
-    />
-  );
-
-  let remaining = typed;
-  const parts: React.ReactNode[] = [];
-  segments.forEach((seg, i) => {
-    const shown = Math.max(0, Math.min(seg.text.length, remaining));
-    remaining -= shown;
-    const style: React.CSSProperties = seg.italic
-      ? { fontStyle: "italic", fontWeight: 400, color: IZANA.olivaOscuro }
-      : {};
-    parts.push(
-      <span key={`v${i}`} style={style}>
-        {seg.text.slice(0, shown)}
-      </span>,
-    );
-    // El cursor va justo después de la última letra escrita.
-    if (shown < seg.text.length && !parts.includes(cursor)) {
-      parts.push(cursor);
-    }
-    // El resto ocupa su lugar invisible para que las líneas no salten.
-    parts.push(
-      <span key={`h${i}`} style={{ ...style, color: "transparent" }}>
-        {seg.text.slice(shown)}
-      </span>,
-    );
-  });
-  if (!parts.includes(cursor)) {
-    parts.push(cursor);
-  }
-
   return (
-    <h1
-      style={{
-        margin: 0,
-        fontFamily: poppins,
-        fontWeight: 600,
-        fontSize: 96,
-        lineHeight: 1.02,
-        letterSpacing: "-0.01em",
-        color: IZANA.verdeBosque,
-      }}
-    >
-      {parts}
+    <h1 style={style}>
+      {text.slice(0, typed)}
+      <span
+        style={{
+          display: "inline-block",
+          width: 8,
+          height: "0.8em",
+          marginLeft: 6,
+          verticalAlign: "-0.04em",
+          backgroundColor: IZANA.lima,
+          opacity: cursorOn ? 1 : 0,
+        }}
+      />
+      {/* El resto ocupa su lugar invisible para que las líneas no salten. */}
+      <span style={{ color: "transparent" }}>{text.slice(typed)}</span>
     </h1>
   );
 };
@@ -398,14 +422,13 @@ const CtaPill: React.FC<{ label: string; delay: number }> = ({
   return (
     <span
       style={{
-        alignSelf: "flex-start",
-        marginTop: 8,
+        marginTop: 64,
         display: "inline-flex",
         borderRadius: 999,
-        padding: "26px 48px",
+        padding: "28px 56px",
         fontFamily: poppins,
         fontWeight: 600,
-        fontSize: 30,
+        fontSize: 34,
         letterSpacing: "0.08em",
         textTransform: "uppercase",
         color: "#FFFFFF",
@@ -421,9 +444,9 @@ const CtaPill: React.FC<{ label: string; delay: number }> = ({
 
 // Destellos de 4 puntas (recurso de marca), sueltos y asimétricos.
 const SPARKLES = [
-  { x: 860, y: 820, size: 56 },
-  { x: 960, y: 905, size: 30 },
-  { x: 110, y: 870, size: 38 },
+  { x: 860, y: 560, size: 60 },
+  { x: 960, y: 650, size: 32 },
+  { x: 110, y: 1250, size: 40 },
 ];
 
 const Sparkles: React.FC<{ startAt: number }> = ({ startAt }) => {
