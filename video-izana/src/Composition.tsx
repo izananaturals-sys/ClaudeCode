@@ -239,14 +239,22 @@ const SceneView: React.FC<{
   );
 };
 
-// Título que entra palabra por palabra, subiendo desde una máscara.
+// Velocidad de escritura del título (letras por frame, 30 fps).
+const CHARS_PER_FRAME = 0.9;
+
+// Título tipo máquina de escribir, con cursor dorado parpadeante.
 const AnimatedTitle: React.FC<{ text: string; delay: number }> = ({
   text,
   delay,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const words = text.split(" ");
+  const typed = Math.max(
+    0,
+    Math.min(text.length, Math.floor((frame - delay) * CHARS_PER_FRAME)),
+  );
+  const isTyping = typed > 0 && typed < text.length;
+  // Fijo mientras escribe; parpadea antes de empezar y al terminar.
+  const cursorOn = isTyping || Math.floor(frame / 15) % 2 === 0;
 
   return (
     <div
@@ -257,36 +265,22 @@ const AnimatedTitle: React.FC<{ text: string; delay: number }> = ({
         lineHeight: 1.15,
         letterSpacing: -1,
         color: COLORS.cream,
-        display: "flex",
-        flexWrap: "wrap",
-        columnGap: "0.25em",
       }}
     >
-      {words.map((word, i) => {
-        const p = spring({
-          frame: frame - delay - i * 4,
-          fps,
-          config: { damping: 18, stiffness: 140 },
-        });
-        return (
-          <span
-            key={i}
-            style={{ display: "inline-block", overflow: "hidden" }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                transform: `translateY(${interpolate(p, [0, 1], [110, 0])}%)`,
-                opacity: interpolate(p, [0, 0.4], [0, 1], {
-                  extrapolateRight: "clamp",
-                }),
-              }}
-            >
-              {word}
-            </span>
-          </span>
-        );
-      })}
+      {text.slice(0, typed)}
+      <span
+        style={{
+          display: "inline-block",
+          width: 8,
+          height: "0.9em",
+          marginLeft: 6,
+          verticalAlign: "-0.08em",
+          backgroundColor: COLORS.gold,
+          opacity: cursorOn ? 1 : 0,
+        }}
+      />
+      {/* El resto ocupa su lugar invisible para que las líneas no salten. */}
+      <span style={{ color: "transparent" }}>{text.slice(typed)}</span>
     </div>
   );
 };
